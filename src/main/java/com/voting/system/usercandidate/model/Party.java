@@ -16,12 +16,13 @@ import java.util.Date;
 public class Party {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.SEQUENCE)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long partyId;
+
   private String partyName;
-  @Lob
-  @Column(columnDefinition = "LONGBLOB")
-  private byte[] partySymbol;
+
+  private String partySymbol;
+
   private Date createdAt;
 
 }

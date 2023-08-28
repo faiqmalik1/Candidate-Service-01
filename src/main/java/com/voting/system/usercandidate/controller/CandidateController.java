@@ -156,4 +156,9 @@ public class CandidateController {
     return candidateService.retrievePartiesById(partyId);
   }
 
+  @PostMapping("/party/create")
+  public ResponseDTO createParty() {
+    return candidateService.createParty();
+  }
+
 }

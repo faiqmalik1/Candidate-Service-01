@@ -14,7 +14,7 @@ import lombok.Setter;
 public class PartyCandidateMapping {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.SEQUENCE)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
   @OneToOne

@@ -1,6 +1,7 @@
 package com.voting.system.usercandidate.service;
 
 import CustomException.CommonException;
+import com.cloudinary.Cloudinary;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.voting.system.usercandidate.feignController.ConstituencyController;
@@ -16,6 +17,7 @@ import constants.ReturnMessage;
 import constants.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -33,10 +35,7 @@ import resources.user.UserResponseDTO;
 import resources.user.ValidateResponseDTO;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +48,7 @@ public class CandidateService extends BaseService {
   private final UserController userController;
   private final ConstituencyController constituencyController;
   private final VoterController voterController;
+  private final Cloudinary cloudinary;
 
   ObjectMapper objectMapper = new ObjectMapper();
   private static String token;
@@ -64,7 +64,7 @@ public class CandidateService extends BaseService {
     if (partyList.isEmpty()) {
       return new PartyListResponseDTO(null);
     }
-    return ModelToResponse.parsePartyListToPartyResponse(partyList, detail);
+    return ModelToResponse.parsePartyListToPartyResponse(cloudinary, partyList, detail);
   }
 
   /**
@@ -234,13 +234,13 @@ public class CandidateService extends BaseService {
     Party party = new Party();
     party.setPartyName(partyName);
     try {
-      party.setPartySymbol(image.getBytes());
+      party.setPartySymbol(saveImage(image));
     } catch (IOException e) {
       return new PartyResponseDTO(generateFailureResponse(ReturnMessage.PARTY_SYMBOL_ERROR.getValue()));
     }
     party.setCreatedAt(new Date());
     party = partyRepository.save(party);
-    return ModelToResponse.parsePartyToPartyResponse(party, false);
+    return ModelToResponse.parsePartyToPartyResponse(cloudinary, party, false);
   }
 
   /**
@@ -287,7 +287,7 @@ public class CandidateService extends BaseService {
 
   public PartyResponseDTO retrieveParty(long partyId) {
     Optional<Party> optionalParty = partyRepository.findById(partyId);
-    return optionalParty.map(party -> ModelToResponse.parsePartyToPartyResponse(party, false)).orElse(null);
+    return optionalParty.map(party -> ModelToResponse.parsePartyToPartyResponse(cloudinary, party, false)).orElse(null);
   }
 
   @Transactional
@@ -318,6 +318,20 @@ public class CandidateService extends BaseService {
     } else {
       partyList.add(optionalParty.get());
     }
-    return ModelToResponse.parsePartyListToPartyResponse(partyList, false);
+    return ModelToResponse.parsePartyListToPartyResponse(cloudinary, partyList, false);
   }
+
+  public ResponseDTO createParty() {
+    Party party = new Party();
+    party.setCreatedAt(new Date());
+    party.setPartyName("PTI");
+    partyRepository.save(party);
+    return generateSuccessResponse();
+  }
+
+  public String saveImage(MultipartFile image) throws IOException {
+    Map<String, String> uploadResult = cloudinary.uploader().upload(image.getBytes(), Map.of());
+    return uploadResult.get("public_id");
+  }
+
 }
